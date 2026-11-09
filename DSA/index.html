@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>AVL Tree Rotations</title>
+    <title>AVL Tree Rotations: Full Walkthrough</title>
     <style>
       :root {
         --bg: #f7f6f2;
@@ -20,7 +20,8 @@
         --badbg: #fde2e2;
         --ok: #16a34a;
         --okbg: #dcf5e3;
-        --tri: #e9e7de;
+        --warn: #d97706;
+        --warnbg: #fef0c7;
         color-scheme: light;
         box-sizing: border-box;
         padding-top: env(safe-area-inset-top, 0px);
@@ -39,7 +40,8 @@
           --badbg: #4a2323;
           --ok: #4ade80;
           --okbg: #17381f;
-          --tri: #34332f;
+          --warn: #fbbf24;
+          --warnbg: #4a3a12;
           color-scheme: dark;
         }
       }
@@ -55,7 +57,8 @@
         --badbg: #4a2323;
         --ok: #4ade80;
         --okbg: #17381f;
-        --tri: #34332f;
+        --warn: #fbbf24;
+        --warnbg: #4a3a12;
         color-scheme: dark;
       }
       html {
@@ -73,7 +76,7 @@
           sans-serif;
       }
       main {
-        max-width: 760px;
+        max-width: 780px;
         margin: 0 auto;
         padding: 20px 16px 32px;
       }
@@ -83,13 +86,12 @@
       }
       h2 {
         font-size: 1.15rem;
-        margin: 0 0 4px;
+        margin: 0 0 2px;
       }
-      .sub,
-      .leg {
+      .sub {
         color: var(--mut);
         font-size: 0.9rem;
-        margin: 0 0 14px;
+        margin: 0 0 12px;
       }
       .tabs {
         display: flex;
@@ -106,8 +108,12 @@
         border-radius: 8px;
         padding: 7px 14px;
       }
-      button:hover {
+      button:hover:not(:disabled) {
         border-color: var(--acc);
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
       }
       .tabs button.on {
         background: var(--acc);
@@ -121,25 +127,53 @@
         padding: 16px;
       }
       .an {
-        margin: 8px 0 0;
+        margin: 8px 0;
         padding: 8px 12px;
         border-left: 3px solid var(--acc);
         background: var(--accbg);
         border-radius: 0 8px 8px 0;
         font-size: 0.92rem;
       }
+      .phs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 10px 0 4px;
+      }
+      .phs span {
+        font-size: 0.8rem;
+        padding: 2px 10px;
+        border-radius: 99px;
+        border: 1px solid var(--line);
+        color: var(--mut);
+      }
+      .phs .done {
+        border-color: var(--ok);
+        color: var(--ok);
+      }
+      .phs .act {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: #fff;
+      }
       .wrap {
         overflow-x: auto;
-        margin: 12px 0;
+        margin: 6px 0;
       }
       svg {
         width: 100%;
-        min-width: 480px;
+        min-width: 500px;
         height: auto;
         display: block;
       }
+      .ino {
+        font-size: 0.88rem;
+        color: var(--mut);
+        margin: 0 0 8px;
+        font-variant-numeric: tabular-nums;
+      }
       .cap {
-        min-height: 4.6em;
+        min-height: 5.6em;
         font-size: 0.95rem;
       }
       .ctl {
@@ -149,8 +183,11 @@
         align-items: center;
         margin-top: 8px;
       }
+      .ctl input {
+        flex: 1 1 120px;
+        min-width: 100px;
+      }
       #stp {
-        margin-left: auto;
         color: var(--mut);
         font-size: 0.9rem;
       }
@@ -175,9 +212,14 @@
         fill: var(--accbg);
         stroke: var(--acc);
       }
-      .nd.ok circle {
+      .nd.ok circle,
+      .nd.new circle {
         fill: var(--okbg);
         stroke: var(--ok);
+      }
+      .nd.cmp circle {
+        fill: var(--warnbg);
+        stroke: var(--warn);
       }
       .nd .v {
         font-weight: 700;
@@ -187,166 +229,108 @@
         font-size: 15px;
       }
       .nd .r {
-        font-size: 12px;
-        fill: var(--mut);
+        font-size: 14px;
+        fill: var(--acc);
         text-anchor: end;
         font-style: italic;
+        font-weight: 700;
       }
-      .bf {
-        font-size: 12px;
+      .nd .bf {
+        font-size: 11px;
         fill: var(--acc);
         font-weight: 600;
+        paint-order: stroke;
+        stroke: var(--card);
+        stroke-width: 3px;
       }
-      .bf.bad {
+      .nd .bf.bad {
         fill: var(--bad);
       }
-      .tri polygon {
-        fill: var(--tri);
-        stroke: var(--mut);
-        stroke-width: 1.5;
-      }
-      .tri.grow polygon {
-        fill: var(--badbg);
-        stroke: var(--bad);
-        stroke-dasharray: 4 3;
-      }
-      .tri text {
-        font-size: 12px;
-        text-anchor: middle;
-        fill: var(--fg);
+      .leg {
+        color: var(--mut);
+        font-size: 0.85rem;
+        margin: 12px 0 0;
       }
     </style>
   </head>
   <body>
     <main>
-      <h1>AVL tree rotations</h1>
+      <h1>AVL rotations: the full story</h1>
       <p class="sub">
-        Pick a case, then step through the rebalancing. BF (balance factor) =
-        height(left) − height(right).
+        Each case replays one real insertion with numbers: before, insert,
+        update, detect, rotate, after. BF = height(left) − height(right), h =
+        height of the subtree.
       </p>
       <div class="tabs" id="tabs"></div>
       <section class="card">
         <h2 id="ct"></h2>
-        <div id="cd" class="sub" style="margin: 0"></div>
+        <div class="sub" id="cd" style="margin: 0"></div>
         <div class="an" id="ca"></div>
+        <div class="phs" id="phs"></div>
         <div class="wrap">
           <svg
             id="sv"
-            viewBox="0 0 570 350"
+            viewBox="0 0 540 330"
             role="img"
-            aria-label="AVL tree rotation"
+            aria-label="AVL tree walkthrough"
           >
             <g id="ed"></g>
             <g id="nd"></g>
           </svg>
         </div>
+        <p class="ino" id="ino"></p>
         <div class="cap" id="cap"></div>
         <div class="ctl">
           <button id="prev">◀ Back</button><button id="play">▶ Play</button
-          ><button id="next">Next ▶</button><button id="reset">↺ Reset</button
-          ><span id="stp"></span>
+          ><button id="next">Next ▶</button><button id="reset">↺ Reset</button>
+          <input
+            type="range"
+            id="rg"
+            min="0"
+            value="0"
+            aria-label="Step"
+          /><span id="stp"></span>
         </div>
       </section>
-      <p class="leg" style="margin-top: 12px">
-        Triangles are whole subtrees (taller = higher). The red dashed triangle
-        is the subtree that just grew after an insertion. Red BF means the AVL
-        rule (|BF| ≤ 1) is broken. Letters z, y, x name the three nodes on the
-        heavy path, from the unbalanced node downward.
+      <p class="leg">
+        Colors: amber = being compared, green = new or fixed, blue = being
+        updated or part of the rotation, red = AVL rule broken (|BF| &gt; 1).
+        Letters z, y, x name the unbalanced node and the two nodes below it on
+        the heavy path. Arrow keys also step.
       </p>
     </main>
     <script>
       const NS = "http://www.w3.org/2000/svg",
-        R = 20;
+        R = 20,
+        PH = ["Before", "Insert", "Update", "Detect", "Rotate", "After"];
       const cases = [
         {
           k: "LL",
-          title: "LL case → single right rotation",
-          d: "The new node landed in the left subtree of z’s left child, so the heavy path leans left in a straight line.",
-          an: "Picture a rope hanging heavy on the left. Lift the middle knot (y) up to the top and let the old top (z) hang down on the right.",
-          h: { T1: 2, T2: 1, T3: 1, T4: 2 },
-          g: "T1",
-          steps: [
-            {
-              t: ["z", 30, ["y", 20, ["x", 10, "T1", "T2"], "T3"], "T4"],
-              hl: { z: "bad", y: "piv", x: "piv" },
-              cap: "<b>Imbalance.</b> A node was inserted under T1. Climbing back up, z is the first node with |BF| = 2 (BF +2). The path z → y → x goes left, left: the LL case.",
-            },
-            {
-              t: ["y", 20, ["x", 10, "T1", "T2"], ["z", 30, "T3", "T4"]],
-              hl: { y: "ok", z: "piv" },
-              cap: "<b>Right-rotate around z.</b> y moves up into z’s spot, z drops to become y’s right child, and T3 (y’s old right subtree) is handed to z as its left child. Left-to-right order is unchanged and every BF is back within ±1.",
-            },
-          ],
+          title: "LL case → one right rotation",
+          base: [50, 30, 70, 20, 40],
+          key: 10,
+          an: "A rope hanging heavy on the left: lift the middle knot (y) to the top and let the old top (z) hang down on the right.",
         },
         {
           k: "RR",
-          title: "RR case → single left rotation",
-          d: "The new node landed in the right subtree of z’s right child, so the heavy path leans right in a straight line.",
+          title: "RR case → one left rotation",
+          base: [30, 10, 50, 40, 60],
+          key: 70,
           an: "Mirror of LL: a rope hanging heavy on the right. Lift the middle knot (y) up and let the old top (z) hang down on the left.",
-          h: { T1: 2, T2: 1, T3: 1, T4: 2 },
-          g: "T4",
-          steps: [
-            {
-              t: ["z", 10, "T1", ["y", 20, "T2", ["x", 30, "T3", "T4"]]],
-              hl: { z: "bad", y: "piv", x: "piv" },
-              cap: "<b>Imbalance.</b> A node was inserted under T4. z has BF −2, and the path z → y → x goes right, right: the RR case.",
-            },
-            {
-              t: ["y", 20, ["z", 10, "T1", "T2"], ["x", 30, "T3", "T4"]],
-              hl: { y: "ok", z: "piv" },
-              cap: "<b>Left-rotate around z.</b> y moves up, z drops to become y’s left child, and T2 (y’s old left subtree) becomes z’s right child. In-order sequence is preserved and the tree is balanced.",
-            },
-          ],
         },
         {
           k: "LR",
           title: "LR case → left rotation, then right rotation",
-          d: "The new node landed in the right subtree of z’s left child, so the heavy path bends like a zig-zag.",
-          an: "A kinked pipe. One twist at the top can’t fix a zig-zag: first straighten the kink (rotate y), then the problem is a plain LL lean you can fix with one more twist.",
-          h: { T1: 2, T2: 1, T3: 2, T4: 2 },
-          g: "T3",
-          steps: [
-            {
-              t: ["z", 30, ["y", 10, "T1", ["x", 20, "T2", "T3"]], "T4"],
-              hl: { z: "bad", y: "piv", x: "piv" },
-              cap: "<b>Imbalance.</b> A node was inserted under T3. z has BF +2, but its left child y leans right (BF −1). The path z → y → x goes left, right: the LR case. A single right rotation would just move the problem.",
-            },
-            {
-              t: ["z", 30, ["x", 20, ["y", 10, "T1", "T2"], "T3"], "T4"],
-              hl: { z: "bad", x: "piv", y: "piv" },
-              cap: "<b>Step 1: left-rotate around y.</b> x rises above y and T2 becomes y’s right child. The kink is now a straight left line (LL shape), but z is still at BF +2.",
-            },
-            {
-              t: ["x", 20, ["y", 10, "T1", "T2"], ["z", 30, "T3", "T4"]],
-              hl: { x: "ok", z: "piv", y: "piv" },
-              cap: "<b>Step 2: right-rotate around z.</b> x becomes the subtree root with y and z as its children, and T3 moves over to be z’s left child. Balanced.",
-            },
-          ],
+          base: [50, 30, 70, 20, 40],
+          key: 35,
+          an: "A kinked pipe: one twist at the top can’t fix a zig-zag. Straighten the kink first (rotate y), then one more twist (rotate z) finishes the job.",
         },
         {
           k: "RL",
           title: "RL case → right rotation, then left rotation",
-          d: "The new node landed in the left subtree of z’s right child: a zig-zag in the other direction.",
-          an: "Mirror of LR: straighten the kink first (rotate y right), then the lean is a plain RR that one left rotation fixes.",
-          h: { T1: 2, T2: 2, T3: 1, T4: 2 },
-          g: "T2",
-          steps: [
-            {
-              t: ["z", 10, "T1", ["y", 30, ["x", 20, "T2", "T3"], "T4"]],
-              hl: { z: "bad", y: "piv", x: "piv" },
-              cap: "<b>Imbalance.</b> A node was inserted under T2. z has BF −2, but its right child y leans left (BF +1). The path z → y → x goes right, left: the RL case.",
-            },
-            {
-              t: ["z", 10, "T1", ["x", 20, "T2", ["y", 30, "T3", "T4"]]],
-              hl: { z: "bad", x: "piv", y: "piv" },
-              cap: "<b>Step 1: right-rotate around y.</b> x rises above y and T3 becomes y’s left child. The zig-zag is now a straight right line (RR shape), but z is still at BF −2.",
-            },
-            {
-              t: ["x", 20, ["z", 10, "T1", "T2"], ["y", 30, "T3", "T4"]],
-              hl: { x: "ok", z: "piv", y: "piv" },
-              cap: "<b>Step 2: left-rotate around z.</b> x becomes the subtree root with z and y as children, and T2 moves over to be z’s right child. Balanced.",
-            },
-          ],
+          base: [30, 10, 50, 40, 60],
+          key: 45,
+          an: "Mirror of LR: straighten the kink at y first, then rotate z the other way.",
         },
       ];
       const $ = (id) => document.getElementById(id),
@@ -359,6 +343,203 @@
         p && p.appendChild(e);
         return e;
       };
+      const mkn = (k) => ({ k, l: null, r: null }),
+        ins = (n, k) => {
+          if (!n) return mkn(k);
+          if (k < n.k) n.l = ins(n.l, k);
+          else n.r = ins(n.r, k);
+          return n;
+        };
+      const H = (n) => (n ? 1 + Math.max(H(n.l), H(n.r)) : 0),
+        BF = (n) => H(n.l) - H(n.r),
+        cl = (n) => (n ? { k: n.k, l: cl(n.l), r: cl(n.r) } : null);
+      const sg = (b) => (b > 0 ? "+" : "") + b,
+        sb = (n) => (n ? `the subtree rooted at ${n.k}` : "an empty subtree");
+      const ino = (t) => {
+        const a = [];
+        (function w(n) {
+          if (n) {
+            w(n.l);
+            a.push(n.k);
+            w(n.r);
+          }
+        })(t);
+        return a;
+      };
+      const full = (t) => {
+        const d = {};
+        (function w(n) {
+          if (!n) return;
+          w(n.l);
+          w(n.r);
+          d[n.k] = { h: H(n), bf: BF(n) };
+        })(t);
+        return d;
+      };
+      function rot(root, k, dir) {
+        const f = (n) => {
+          if (n.k === k) {
+            if (dir === "R") {
+              const y = n.l;
+              n.l = y.r;
+              y.r = n;
+              return y;
+            }
+            const y = n.r;
+            n.r = y.l;
+            y.l = n;
+            return y;
+          }
+          if (k < n.k) n.l = f(n.l);
+          else n.r = f(n.r);
+          return n;
+        };
+        return f(root);
+      }
+      function build(sc) {
+        let root = null;
+        sc.base.forEach((k) => (root = ins(root, k)));
+        const F = [],
+          K = sc.key;
+        let disp = full(root),
+          roles = {};
+        const push = (hl, ph, cap) =>
+          F.push({
+            t: cl(root),
+            disp: JSON.parse(JSON.stringify(disp)),
+            hl,
+            roles: { ...roles },
+            ph,
+            cap,
+          });
+        push(
+          {},
+          0,
+          `<b>A balanced tree.</b> Every node has |BF| ≤ 1. We are about to insert <b>${K}</b>.`,
+        );
+        const path = [];
+        let n = root;
+        while (n) {
+          path.push(n);
+          const L = K < n.k,
+            nx = L ? n.l : n.r;
+          push(
+            { [n.k]: "cmp" },
+            1,
+            `<b>Insert ${K}: walk down like a BST.</b> ${K} ${L ? "<" : ">"} ${n.k}, so go ${L ? "left" : "right"}.${nx ? "" : ` That slot is empty, so ${K} goes here.`}`,
+          );
+          n = nx;
+        }
+        root = ins(root, K);
+        disp[K] = { h: 1, bf: 0 };
+        push(
+          { [K]: "new" },
+          1,
+          `<b>${K} is inserted</b> as a new leaf under ${path[path.length - 1].k}. It has h = 1 and BF 0, but the heights above it are now out of date.`,
+        );
+        let z = null;
+        for (let i = path.length - 1; i >= 0 && !z; i--) {
+          const a = path[i],
+            hl = H(a.l),
+            hr = H(a.r),
+            b = hl - hr;
+          disp[a.k] = { h: H(a), bf: b };
+          if (Math.abs(b) > 1) {
+            z = a;
+            push(
+              { [a.k]: "bad" },
+              2,
+              `<b>Update ${a.k}.</b> Left height ${hl}, right height ${hr}, so BF = ${hl} − ${hr} = <b>${b}</b>. |BF| &gt; 1: the AVL rule is broken here.`,
+            );
+          } else
+            push(
+              { [a.k]: "piv" },
+              2,
+              `<b>Update ${a.k} on the way back up.</b> Left height ${hl}, right height ${hr}, so h = ${H(a)} and BF = ${hl} − ${hr} = ${b}. Still within ±1, keep climbing.`,
+            );
+        }
+        const d1 = BF(z) > 0 ? "left" : "right",
+          y = BF(z) > 0 ? z.l : z.r,
+          d2 = BF(y) > 0 ? "left" : "right",
+          x = BF(y) > 0 ? y.l : y.r;
+        const cs = (d1 === "left" ? "L" : "R") + (d2 === "left" ? "L" : "R"),
+          fix = {
+            LL: "one right rotation at z",
+            RR: "one left rotation at z",
+            LR: "left-rotate y, then right-rotate z",
+            RL: "right-rotate y, then left-rotate z",
+          }[cs];
+        roles = { [z.k]: "z", [y.k]: "y", [x.k]: "x" };
+        push(
+          { [z.k]: "bad", [y.k]: "piv", [x.k]: "piv" },
+          3,
+          `<b>Imbalance at z = ${z.k}</b> (the lowest unbalanced node). Follow the heavy side: y = ${y.k} is z’s ${d1} child, x = ${x.k} is y’s ${d2} child. ${d1}, ${d2} gives the <b>${cs} case</b>: ${fix}.`,
+        );
+        let top;
+        if (cs === "LL") {
+          const m = y.r;
+          root = rot(root, z.k, "R");
+          disp = full(root);
+          top = y.k;
+          push(
+            { [y.k]: "ok", [z.k]: "piv" },
+            4,
+            `<b>Right-rotate around z (${z.k}).</b> y (${y.k}) moves up into z’s place, z becomes y’s right child, and y’s old right child (${sb(m)}) is handed to z as its left child.`,
+          );
+        } else if (cs === "RR") {
+          const m = y.l;
+          root = rot(root, z.k, "L");
+          disp = full(root);
+          top = y.k;
+          push(
+            { [y.k]: "ok", [z.k]: "piv" },
+            4,
+            `<b>Left-rotate around z (${z.k}).</b> y (${y.k}) moves up into z’s place, z becomes y’s left child, and y’s old left child (${sb(m)}) is handed to z as its right child.`,
+          );
+        } else {
+          const lr = cs === "LR",
+            m1 = lr ? x.l : x.r;
+          root = rot(root, y.k, lr ? "L" : "R");
+          disp = full(root);
+          top = x.k;
+          push(
+            { [x.k]: "piv", [y.k]: "piv", [z.k]: "bad" },
+            4,
+            `<b>Step 1: ${lr ? "left" : "right"}-rotate around y (${y.k}).</b> x (${x.k}) moves above y, and x’s old ${lr ? "left" : "right"} child (${sb(m1)}) becomes y’s ${lr ? "right" : "left"} child. The zig-zag is now a straight ${lr ? "LL" : "RR"} line, but z is still unbalanced.`,
+          );
+          const m2 = lr ? x.r : x.l;
+          root = rot(root, z.k, lr ? "R" : "L");
+          disp = full(root);
+          push(
+            { [x.k]: "ok", [y.k]: "piv", [z.k]: "piv" },
+            4,
+            `<b>Step 2: ${lr ? "right" : "left"}-rotate around z (${z.k}).</b> x (${x.k}) rises to the top of the subtree with y and z as its children, and x’s ${lr ? "right" : "left"} child (${sb(m2)}) becomes z’s ${lr ? "left" : "right"} child.`,
+          );
+        }
+        push(
+          { [top]: "ok" },
+          5,
+          `<b>Balanced again.</b> ${top} is the new root of this subtree and every BF is within ±1. The in-order sequence is still ${ino(root).join(", ")}: rotations change the shape, never the sorted order.`,
+        );
+        return F;
+      }
+      function layout(t) {
+        const pos = {},
+          par = {},
+          edges = [];
+        let i = 0;
+        (function w(n, d, p) {
+          if (!n) return;
+          w(n.l, d + 1, n.k);
+          pos[n.k] = { x: 46 + i++ * 76, y: 40 + d * 80 };
+          par[n.k] = p;
+          if (p != null) edges.push([p, n.k]);
+          w(n.r, d + 1, n.k);
+        })(t, 0, null);
+        return { pos, par, edges };
+      }
+      const lerp = (a, b, t) => a + (b - a) * t,
+        ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
       let C,
         cur = 0,
         rp = {},
@@ -367,141 +548,120 @@
         el = {},
         ln = {},
         raf,
-        timer,
-        ci = 0;
-      function layout(spec) {
-        const pos = {},
-          info = {},
-          edges = [];
-        let k = 0;
-        (function go(n, d, par) {
-          let id, hh;
-          if (typeof n === "string") {
-            id = n;
-            hh = C.h[n];
-            pos[id] = { x: 50 + k++ * 78, y: 46 + d * 88 - 18 };
-            info[id] = { leaf: 1, h: hh };
-          } else {
-            const [nid, v, l, r] = n;
-            id = nid;
-            const L = go(l, d + 1, id);
-            pos[id] = { x: 50 + k++ * 78, y: 46 + d * 88 };
-            const Rr = go(r, d + 1, id);
-            hh = 1 + Math.max(L, Rr);
-            info[id] = { v, bf: L - Rr };
-          }
-          if (par) edges.push([par, id]);
-          return hh;
-        })(spec, 0, null);
-        return { pos, info, edges };
-      }
-      const lerp = (a, b, t) => a + (b - a) * t,
-        ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
-      function setBF(L) {
-        for (const id in L.info) {
-          const i = L.info[id];
-          if (i.leaf) continue;
-          const b = el[id].bf;
-          b.textContent = "BF " + (i.bf > 0 ? "+" : "") + i.bf;
-          b.setAttribute("class", "bf" + (Math.abs(i.bf) > 1 ? " bad" : ""));
-        }
-      }
-      function place(P, A, B, e, Lbf) {
-        for (const id in P) {
-          el[id].g.setAttribute(
-            "transform",
-            `translate(${P[id].x},${P[id].y})`,
-          );
-        }
-        const ks = {};
-        A.forEach(([p, c]) => (ks[p + ">" + c] = [1, 0]));
-        B.forEach(([p, c]) => {
-          const k = p + ">" + c;
-          ks[k] = ks[k] ? [1, 1] : [0, 1];
-        });
-        for (const k in ks) {
-          const [p, c] = k.split(">");
-          if (!ln[k]) ln[k] = mk("line", { class: "ln" }, ed);
-          const l = ln[k],
-            [a, b] = ks[k];
-          l.setAttribute("x1", P[p].x);
-          l.setAttribute("y1", P[p].y);
-          l.setAttribute("x2", P[c].x);
-          l.setAttribute("y2", P[c].y);
-          l.style.opacity = a && b ? 1 : b ? e : 1 - e;
-          l.style.display = !b && e >= 1 ? "none" : "";
-        }
-      }
+        timer;
       function show(i, instant) {
         cancelAnimationFrame(raf);
+        const F = C.F[i],
+          L = layout(F.t),
+          oF = C.F[cur] || F,
+          oL = prevL || L;
         cur = i;
-        const S = C.steps[i],
-          L = layout(S.t);
-        for (const id in el) {
-          const g = el[id].g;
-          if (!L.info[id].leaf)
-            g.setAttribute("class", "nd" + (S.hl[id] ? " " + S.hl[id] : ""));
+        const from = {};
+        for (const k in L.pos) {
+          const p = L.par[k];
+          from[k] = rp[k] || (p != null ? rp[p] || L.pos[p] : L.pos[k]);
         }
-        $("cap").innerHTML = S.cap;
-        $("stp").textContent = "Step " + (i + 1) + " / " + C.steps.length;
+        for (const k in el) {
+          el[k].g.setAttribute("class", "nd" + (F.hl[k] ? " " + F.hl[k] : ""));
+          el[k].r.textContent = F.roles[k] || "";
+        }
+        $("cap").innerHTML = F.cap;
+        $("stp").textContent = `Step ${i + 1} / ${C.F.length}`;
+        $("rg").value = i;
+        $("ino").textContent = "In-order: " + ino(F.t).join("  ");
+        document
+          .querySelectorAll("#phs span")
+          .forEach(
+            (s, j) =>
+              (s.className = j < F.ph ? "done" : j === F.ph ? "act" : ""),
+          );
         $("prev").disabled = i === 0;
-        $("next").disabled = i === C.steps.length - 1;
-        const from = JSON.parse(JSON.stringify(rp)),
-          A = curEdges,
+        $("next").disabled = i === C.F.length - 1;
+        const A = curEdges,
           B = L.edges,
-          old = prevL;
+          dur = instant ? 0 : 800,
+          t0 = performance.now();
         prevL = L;
         curEdges = B;
-        const dur = instant ? 0 : 850,
-          t0 = performance.now();
         (function f(now) {
           const e = dur ? ease(Math.min(1, (now - t0) / dur)) : 1;
-          for (const id in L.pos)
-            rp[id] = {
-              x: lerp(from[id].x, L.pos[id].x, e),
-              y: lerp(from[id].y, L.pos[id].y, e),
+          for (const k in L.pos)
+            rp[k] = {
+              x: lerp(from[k].x, L.pos[k].x, e),
+              y: lerp(from[k].y, L.pos[k].y, e),
             };
-          setBF(e > 0.5 ? L : old);
-          place(rp, A, B, e);
+          const D = e > 0.5 ? F.disp : oF.disp;
+          for (const k in el) {
+            const x = el[k];
+            if (rp[k])
+              x.g.setAttribute("transform", `translate(${rp[k].x},${rp[k].y})`);
+            x.g.style.opacity = lerp(oL.pos[k] ? 1 : 0, L.pos[k] ? 1 : 0, e);
+            const d = D[k] || F.disp[k];
+            if (d) {
+              x.bf.textContent = `BF ${sg(d.bf)} · h${d.h}`;
+              x.bf.setAttribute(
+                "class",
+                "bf" + (Math.abs(d.bf) > 1 ? " bad" : ""),
+              );
+            }
+          }
+          const ks = {};
+          A.forEach(([p, c]) => (ks[p + ">" + c] = [1, 0]));
+          B.forEach(([p, c]) => {
+            const k = p + ">" + c;
+            ks[k] = ks[k] ? [1, 1] : [0, 1];
+          });
+          for (const k in ks) {
+            const [p, c] = k.split(">");
+            if (!ln[k]) ln[k] = mk("line", { class: "ln" }, ed);
+            const l = ln[k],
+              [a, b] = ks[k];
+            l.setAttribute("x1", rp[p].x);
+            l.setAttribute("y1", rp[p].y);
+            l.setAttribute("x2", rp[c].x);
+            l.setAttribute("y2", rp[c].y);
+            l.style.opacity = a && b ? 1 : b ? e : 1 - e;
+            l.style.display = !b && e >= 1 ? "none" : "";
+          }
           if (e < 1) raf = requestAnimationFrame(f);
         })(t0);
       }
       function setCase(i) {
         stop();
-        ci = i;
         C = cases[i];
+        C.F = C.F || build(C);
         ed.innerHTML = nd.innerHTML = "";
         el = {};
         ln = {};
         curEdges = [];
+        rp = {};
+        prevL = null;
+        cur = 0;
         $("ct").textContent = C.title;
-        $("cd").textContent = C.d;
+        $("cd").textContent =
+          `Start with keys ${C.base.join(", ")} (inserted in that order), then insert ${C.key}.`;
         $("ca").innerHTML = "<b>Analogy:</b> " + C.an;
         document
           .querySelectorAll("#tabs button")
           .forEach((b, j) => b.classList.toggle("on", j === i));
-        const L = layout(C.steps[0].t);
-        rp = {};
-        for (const id in L.info) {
-          const i = L.info[id],
-            g = mk("g", {}, nd);
-          rp[id] = { ...L.pos[id] };
-          if (i.leaf) {
-            const ht = 14 * i.h + 8,
-              w = ht * 0.62;
-            g.setAttribute("class", "tri" + (id === C.g ? " grow" : ""));
-            mk("polygon", { points: `0,0 ${-w},${ht} ${w},${ht}` }, g);
-            mk("text", { x: 0, y: ht - 7 }, g, id);
-            el[id] = { g };
-          } else {
-            mk("circle", { r: R }, g);
-            mk("text", { class: "v" }, g, i.v);
-            mk("text", { class: "r", x: -R - 4, y: -R + 4 }, g, id);
-            const bf = mk("text", { class: "bf", x: R + 3, y: -R + 2 }, g);
-            el[id] = { g, bf };
-          }
-        }
-        prevL = L;
+        $("phs").innerHTML = PH.map(
+          (p, j) => `<span>${j + 1}. ${p}</span>`,
+        ).join("");
+        $("rg").max = C.F.length - 1;
+        const keys = new Set();
+        C.F.forEach((f) =>
+          Object.keys(layout(f.t).pos).forEach((k) => keys.add(k)),
+        );
+        keys.forEach((k) => {
+          const g = mk("g", { class: "nd", style: "opacity:0" }, nd);
+          mk("circle", { r: R }, g);
+          mk("text", { class: "v" }, g, k);
+          el[k] = {
+            g,
+            r: mk("text", { class: "r", x: -R - 4, y: -R + 4 }, g),
+            bf: mk("text", { class: "bf", x: R + 3, y: -R + 2 }, g),
+          };
+        });
         show(0, true);
       }
       function stop() {
@@ -519,7 +679,7 @@
       );
       $("next").onclick = () => {
         stop();
-        if (cur < C.steps.length - 1) show(cur + 1);
+        if (cur < C.F.length - 1) show(cur + 1);
       };
       $("prev").onclick = () => {
         stop();
@@ -529,18 +689,26 @@
         stop();
         show(0);
       };
+      $("rg").oninput = (e) => {
+        stop();
+        show(+e.target.value);
+      };
       $("play").onclick = () => {
         if (timer) {
           stop();
           return;
         }
-        if (cur >= C.steps.length - 1) show(0);
+        if (cur >= C.F.length - 1) show(0);
         $("play").textContent = "❚❚ Pause";
         timer = setInterval(() => {
-          if (cur < C.steps.length - 1) show(cur + 1);
+          if (cur < C.F.length - 1) show(cur + 1);
           else stop();
         }, 2600);
       };
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") $("next").click();
+        if (e.key === "ArrowLeft") $("prev").click();
+      });
       setCase(0);
     </script>
   </body>
